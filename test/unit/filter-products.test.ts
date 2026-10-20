@@ -90,10 +90,11 @@ describe('filterProducts', () => {
   })
 
   it('puts products without a spec last in both directions', () => {
-    for (const sort of ['spec-asc', 'spec-desc']) {
-      const items = run({ sort }).items
-      expect(items.slice(-2).every(p => p.spec === null), sort).toBe(true)
-    }
+    const withUnknown = [product('Mystery Battery', { category: 'battery' }), ...PRODUCTS]
+    expect(run({ category: 'battery', sort: 'spec-asc' }, withUnknown).items.map(p => p.name))
+      .toEqual(['Vault 5', 'Bank 7', 'Vault 10', 'Mystery Battery'])
+    expect(run({ category: 'battery', sort: 'spec-desc' }, withUnknown).items.map(p => p.name))
+      .toEqual(['Vault 10', 'Bank 7', 'Vault 5', 'Mystery Battery'])
   })
 
   it('paginates and clamps the page to the last one', () => {

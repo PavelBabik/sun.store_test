@@ -1,9 +1,12 @@
 <script setup lang="ts">
+import { CATEGORIES } from '#shared/utils/categories'
 import type { ProductsResponse } from '#shared/types/api'
 
 defineProps<{ facets: ProductsResponse['facets'] }>()
 
 const { query, update, locationFor } = useProductFilters()
+
+const specLabel = computed(() => CATEGORIES.find(c => c.slug === query.value.category)?.specLabel)
 </script>
 
 <template>
@@ -54,6 +57,17 @@ const { query, update, locationFor } = useProductFilters()
       :max="query.priceMax"
       :bounds="facets.price"
       @update="(priceMin, priceMax) => update({ priceMin, priceMax })"
+    />
+
+    <!-- Shown only inside batteries / solar panels: kWh and W are not comparable across categories. -->
+    <RangeFilter
+      v-if="facets.spec && specLabel"
+      :label="specLabel"
+      :unit="facets.spec.unit"
+      :min="query.specMin"
+      :max="query.specMax"
+      :bounds="facets.spec"
+      @update="(specMin, specMax) => update({ specMin, specMax })"
     />
 
     <fieldset v-if="facets.manufacturers.length > 0">

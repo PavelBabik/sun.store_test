@@ -30,17 +30,20 @@ watch(() => route.fullPath, () => {
     </aside>
 
     <section class="space-y-4">
-      <header class="flex flex-wrap items-end justify-between gap-2">
-        <h1 class="text-2xl font-bold">
-          Solar products
-        </h1>
-        <p
-          v-if="data"
-          class="text-sm text-muted"
-          aria-live="polite"
-        >
-          {{ data.total }} {{ data.total === 1 ? 'product' : 'products' }}
-        </p>
+      <header class="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h1 class="text-2xl font-bold">
+            Solar products
+          </h1>
+          <p
+            v-if="data"
+            class="text-sm text-muted"
+            aria-live="polite"
+          >
+            {{ data.total }} {{ data.total === 1 ? 'product' : 'products' }}
+          </p>
+        </div>
+        <ProductSort />
       </header>
 
       <div class="flex gap-2">

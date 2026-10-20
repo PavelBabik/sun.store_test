@@ -2,13 +2,14 @@ import { getSpecUnit, isCategorySlug } from './categories'
 import type { CategorySlug } from './categories'
 import { slugify } from './slugify'
 
+/** `spec-*` options are labelled with the category's spec name in the UI ("Capacity", "Power"). */
 export const SORT_OPTIONS = [
-  { value: 'relevance', label: 'Relevance' },
-  { value: 'price-asc', label: 'Price: low to high' },
-  { value: 'price-desc', label: 'Price: high to low' },
-  { value: 'spec-asc', label: 'Capacity / power: low to high' },
-  { value: 'spec-desc', label: 'Capacity / power: high to low' },
-  { value: 'name-asc', label: 'Name: A–Z' },
+  { value: 'relevance', label: 'Relevance', needsSpec: false },
+  { value: 'price-asc', label: 'Price: low to high', needsSpec: false },
+  { value: 'price-desc', label: 'Price: high to low', needsSpec: false },
+  { value: 'spec-asc', label: 'low to high', needsSpec: true },
+  { value: 'spec-desc', label: 'high to low', needsSpec: true },
+  { value: 'name-asc', label: 'Name: A–Z', needsSpec: false },
 ] as const
 
 export type SortOption = (typeof SORT_OPTIONS)[number]['value']
@@ -73,10 +74,14 @@ export function parseProductQuery(raw: RawQuery): ProductQuery {
 
   const [priceMin, priceMax] = orderRange(toNonNegativeNumber(raw.priceMin), toNonNegativeNumber(raw.priceMax))
   const validCategory = isCategorySlug(category) ? category : null
-  // kWh and W cannot be compared, so spec bounds need a category that has a spec unit.
-  const [specMin, specMax] = validCategory && getSpecUnit(validCategory)
+  // kWh and W cannot be compared, so spec bounds and spec sorting need a category that has a spec unit.
+  const hasSpec = validCategory !== null && getSpecUnit(validCategory) !== null
+  const [specMin, specMax] = hasSpec
     ? orderRange(toNonNegativeNumber(raw.specMin), toNonNegativeNumber(raw.specMax))
     : [null, null]
+  const validSort = isSortOption(sort) && (hasSpec || !SORT_OPTIONS.find(o => o.value === sort)?.needsSpec)
+    ? sort
+    : DEFAULT_SORT
 
   const manufacturers = [...new Set(toStringList(raw.manufacturer).map(slugify).filter(Boolean))].sort()
 
@@ -88,7 +93,7 @@ export function parseProductQuery(raw: RawQuery): ProductQuery {
     priceMax,
     specMin,
     specMax,
-    sort: isSortOption(sort) ? sort : DEFAULT_SORT,
+    sort: validSort,
     page: page >= 1 ? page : 1,
   }
 }

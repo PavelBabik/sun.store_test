@@ -57,9 +57,11 @@ describe('parseProductQuery', () => {
     expect(query).toMatchObject({ priceMin: 100, priceMax: 500, specMin: 400, specMax: 600 })
   })
 
-  it('drops spec bounds without a category that has a spec unit', () => {
-    expect(parseProductQuery({ specMin: '5' })).toMatchObject({ specMin: null, specMax: null })
-    expect(parseProductQuery({ category: 'connector', specMin: '5' })).toMatchObject({ specMin: null })
+  it('drops spec bounds and spec sorting without a category that has a spec unit', () => {
+    expect(parseProductQuery({ specMin: '5', sort: 'spec-asc' })).toMatchObject({ specMin: null, specMax: null, sort: DEFAULT_SORT })
+    expect(parseProductQuery({ category: 'connector', specMin: '5', sort: 'spec-desc' })).toMatchObject({ specMin: null, sort: DEFAULT_SORT })
+    expect(parseProductQuery({ category: 'battery', sort: 'spec-desc' }).sort).toBe('spec-desc')
+    expect(parseProductQuery({ sort: 'price-desc' }).sort).toBe('price-desc')
   })
 
   it('normalizes manufacturers: comma lists, slugs, duplicates, order', () => {
