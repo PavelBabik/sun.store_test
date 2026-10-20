@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SORT, MAX_SEARCH_LENGTH, parseProductQuery } from '../../shared/utils/product-query'
+import { DEFAULT_SORT, MAX_SEARCH_LENGTH, parseProductQuery, toRouteQuery } from '../../shared/utils/product-query'
 
 const EMPTY = {
   q: '',
@@ -80,5 +80,38 @@ describe('parseProductQuery', () => {
   it('floors fractional pages', () => {
     expect(parseProductQuery({ page: '2.7' }).page).toBe(2)
     expect(parseProductQuery({ page: '0' }).page).toBe(1)
+  })
+})
+
+describe('toRouteQuery', () => {
+  it('omits defaults', () => {
+    expect(toRouteQuery(parseProductQuery({}))).toEqual({})
+  })
+
+  it('serializes every filter with a stable key order', () => {
+    const query = toRouteQuery(parseProductQuery({
+      page: '2',
+      sort: 'price-asc',
+      manufacturer: 'b,a',
+      category: 'battery',
+      specMax: '10',
+      priceMin: '100',
+      q: 'lfp',
+    }))
+    expect(query).toEqual({
+      q: 'lfp',
+      category: 'battery',
+      manufacturer: ['a', 'b'],
+      priceMin: '100',
+      specMax: '10',
+      sort: 'price-asc',
+      page: '2',
+    })
+    expect(Object.keys(query)).toEqual(['q', 'category', 'manufacturer', 'priceMin', 'specMax', 'sort', 'page'])
+  })
+
+  it('round-trips through parseProductQuery', () => {
+    const query = parseProductQuery({ q: 'mc4', category: 'solar-panel', manufacturer: ['x', 'y'], priceMax: '99.5', specMin: '400', sort: 'spec-desc', page: '3' })
+    expect(parseProductQuery(toRouteQuery(query))).toEqual(query)
   })
 })

@@ -92,3 +92,28 @@ export function parseProductQuery(raw: RawQuery): ProductQuery {
     page: page >= 1 ? page : 1,
   }
 }
+
+export type RouteQuery = Record<string, string | string[]>
+
+/**
+ * Inverse of `parseProductQuery`: builds the URL query, omitting defaults,
+ * with a stable key order so equal filters always produce the same URL.
+ */
+export function toRouteQuery(query: ProductQuery): RouteQuery {
+  const result: RouteQuery = {}
+  const setNumber = (key: string, value: number | null) => {
+    if (value !== null) result[key] = String(value)
+  }
+
+  if (query.q) result.q = query.q
+  if (query.category) result.category = query.category
+  if (query.manufacturers.length > 0) result.manufacturer = [...query.manufacturers]
+  setNumber('priceMin', query.priceMin)
+  setNumber('priceMax', query.priceMax)
+  setNumber('specMin', query.specMin)
+  setNumber('specMax', query.specMax)
+  if (query.sort !== DEFAULT_SORT) result.sort = query.sort
+  if (query.page > 1) result.page = String(query.page)
+
+  return result
+}
