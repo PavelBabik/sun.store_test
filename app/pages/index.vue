@@ -1,11 +1,47 @@
 <script setup lang="ts">
+import { canonicalRedirect } from '#shared/utils/product-query'
+import { buildListingSeo, SITE_NAME } from '#shared/utils/seo'
+
 const route = useRoute()
+const router = useRouter()
 const { reset } = useProductFilters()
 
 // The URL is the single source of truth for filters: `useFetch` runs on the server
 // for the first render (SSR) and refetches on the client whenever the query changes.
 const { data, status, error } = await useFetch('/api/products', {
   query: computed(() => route.query),
+})
+
+// Non-canonical URLs (out-of-range page, invalid or reordered values) get a 301 to the canonical one,
+// so search engines and shared links do not accumulate duplicates. Unknown params like utm_* are kept.
+async function redirectToCanonical() {
+  if (!data.value) return
+  const target = canonicalRedirect(route.query, data.value.query)
+  if (target) await navigateTo({ path: route.path, query: target }, { replace: true, redirectCode: 301 })
+}
+await redirectToCanonical()
+watch(data, redirectToCanonical)
+
+const seo = computed(() => (data.value ? buildListingSeo(data.value) : null))
+const origin = useRequestURL().origin
+const canonicalUrl = computed(() => {
+  const query = seo.value?.canonicalQuery
+  return query ? origin + router.resolve({ path: route.path, query }).fullPath : undefined
+})
+
+useSeoMeta({
+  title: () => seo.value?.title ?? SITE_NAME,
+  description: () => seo.value?.description,
+  robots: () => seo.value?.robots,
+  ogTitle: () => seo.value?.title,
+  ogDescription: () => seo.value?.description,
+  ogUrl: () => canonicalUrl.value ?? origin + route.fullPath,
+  ogType: 'website',
+  ogSiteName: SITE_NAME,
+  twitterCard: 'summary',
+})
+useHead({
+  link: () => (canonicalUrl.value ? [{ rel: 'canonical', href: canonicalUrl.value }] : []),
 })
 
 const isLoading = computed(() => status.value === 'pending')
@@ -45,7 +81,7 @@ watch(() => route.fullPath, () => {
       <header class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 class="text-2xl font-bold">
-            Solar products
+            {{ seo?.heading ?? 'Solar products' }}
           </h1>
           <p
             v-if="data"

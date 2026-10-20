@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SORT, MAX_SEARCH_LENGTH, parseProductQuery, toRouteQuery } from '../../shared/utils/product-query'
+import { canonicalRedirect, DEFAULT_SORT, MAX_SEARCH_LENGTH, parseProductQuery, toRouteQuery } from '../../shared/utils/product-query'
 
 const EMPTY = {
   q: '',
@@ -115,5 +115,32 @@ describe('toRouteQuery', () => {
   it('round-trips through parseProductQuery', () => {
     const query = parseProductQuery({ q: 'mc4', category: 'solar-panel', manufacturer: ['x', 'y'], priceMax: '99.5', specMin: '400', sort: 'spec-desc', page: '3' })
     expect(parseProductQuery(toRouteQuery(query))).toEqual(query)
+  })
+})
+
+describe('canonicalRedirect', () => {
+  const redirect = (raw: Record<string, unknown>, applied = parseProductQuery(raw)) => canonicalRedirect(raw, applied)
+
+  it('returns null for canonical URLs, regardless of key order', () => {
+    expect(redirect({})).toBeNull()
+    expect(redirect({ page: '2', category: 'battery' })).toBeNull()
+    expect(redirect({ manufacturer: ['a', 'b'] })).toBeNull()
+  })
+
+  it('ignores and keeps unknown params such as utm_*', () => {
+    expect(redirect({ category: 'battery', utm_source: 'newsletter' })).toBeNull()
+    expect(redirect({ category: 'nope', utm_source: 'x' })).toEqual({ utm_source: 'x' })
+  })
+
+  it('redirects invalid and non-normalized values', () => {
+    expect(redirect({ category: 'battery', page: '1' })).toEqual({ category: 'battery' })
+    expect(redirect({ manufacturer: 'EcoCharge,Quantum Energy' })).toEqual({ manufacturer: ['ecocharge', 'quantum-energy'] })
+    expect(redirect({ priceMin: '500', priceMax: '100' })).toEqual({ priceMin: '100', priceMax: '500' })
+    expect(redirect({ q: '' })).toEqual({})
+  })
+
+  it('redirects a page beyond the last one to the clamped page', () => {
+    expect(redirect({ category: 'battery', page: '7' }, { ...parseProductQuery({ category: 'battery' }), page: 3 }))
+      .toEqual({ category: 'battery', page: '3' })
   })
 })

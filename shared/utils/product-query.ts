@@ -122,3 +122,32 @@ export function toRouteQuery(query: ProductQuery): RouteQuery {
 
   return result
 }
+
+const QUERY_KEYS = new Set(['q', 'category', 'manufacturer', 'priceMin', 'priceMax', 'specMin', 'specMax', 'sort', 'page'])
+
+function toStrings(value: unknown): string[] {
+  return (Array.isArray(value) ? value : [value]).map(item => (item === null || item === undefined ? '' : String(item)))
+}
+
+/**
+ * Returns the canonical query to redirect to when the URL is not canonical
+ * (invalid values, out-of-range page, `manufacturer=a,b` instead of repeated keys…), or `null` if it already is.
+ * Only listing params are compared; anything else (e.g. `utm_*`) is kept as is, and key order does not matter.
+ */
+export function canonicalRedirect(raw: Record<string, unknown>, applied: ProductQuery): RouteQuery | null {
+  const canonical = toRouteQuery(applied)
+  const current = Object.keys(raw).filter(key => QUERY_KEYS.has(key))
+
+  const isCanonical = current.length === Object.keys(canonical).length
+    && current.every((key) => {
+      const expected = canonical[key]
+      return expected !== undefined && toStrings(raw[key]).join('\n') === toStrings(expected).join('\n')
+    })
+  if (isCanonical) return null
+
+  const extra: RouteQuery = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (!QUERY_KEYS.has(key)) extra[key] = Array.isArray(value) ? toStrings(value) : toStrings(value)[0] ?? ''
+  }
+  return { ...extra, ...canonical }
+}
