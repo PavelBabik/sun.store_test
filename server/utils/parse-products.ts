@@ -1,7 +1,8 @@
 import { parse } from 'csv-parse/sync'
-import { CATEGORIES } from '#shared/utils/categories'
+import { CATEGORIES, getSpecUnit } from '#shared/utils/categories'
 import type { CategorySlug } from '#shared/utils/categories'
 import type { Product } from '#shared/types/product'
+import { extractSpec } from './extract-spec'
 
 interface CsvRow {
   name?: string
@@ -66,7 +67,9 @@ export function parseProducts(csv: string): { products: Product[], skipped: stri
     for (let n = 2; usedIds.has(id); n++) id = `${baseId}-${n}`
     usedIds.add(id)
 
-    products.push({ id, name, manufacturer, price, description, category })
+    const spec = extractSpec(name, description, getSpecUnit(category))
+
+    products.push({ id, name, manufacturer, price, description, category, spec })
   })
 
   return { products, skipped }
