@@ -10,6 +10,15 @@ const { data, status, error } = await useFetch('/api/products', {
 
 const isLoading = computed(() => status.value === 'pending')
 const filtersOpen = ref(false)
+const results = useTemplateRef('results')
+
+// Query-only navigation keeps the scroll position (Nuxt default), which is right for filters,
+// but after switching pages the user expects to start at the top of the new results.
+watch(() => data.value?.page, (page, previous) => {
+  if (import.meta.client && previous !== undefined && page !== previous) {
+    results.value?.scrollIntoView({ block: 'start' })
+  }
+})
 
 // Close the mobile drawer after a filter is applied.
 watch(() => route.fullPath, () => {
@@ -29,7 +38,10 @@ watch(() => route.fullPath, () => {
       />
     </aside>
 
-    <section class="space-y-4">
+    <section
+      ref="results"
+      class="space-y-4 scroll-mt-4"
+    >
       <header class="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 class="text-2xl font-bold">
@@ -107,6 +119,13 @@ watch(() => route.fullPath, () => {
             <ProductCard :product="product" />
           </li>
         </ul>
+
+        <ProductPagination
+          :page="data.page"
+          :page-count="data.pageCount"
+          :page-size="data.pageSize"
+          :total="data.total"
+        />
       </template>
     </section>
   </div>

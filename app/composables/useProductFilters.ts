@@ -16,7 +16,7 @@ export function useProductFilters() {
 
   const query = computed(() => parseProductQuery(route.query))
 
-  /** Applies a change on top of the current query; any filter change returns to page 1. */
+  /** Applies a change on top of the current query; any filter change returns to page 1 (unless `page` is the change). */
   function nextQuery(patch: Partial<ProductQuery>): ProductQuery {
     const next: ProductQuery = { ...query.value, page: 1, ...patch }
     // Capacity (kWh) and power (W) bounds are meaningless in another category.
