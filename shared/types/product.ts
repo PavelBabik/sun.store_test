@@ -18,6 +18,8 @@ export interface Product {
   id: string
   name: string
   manufacturer: string
+  /** URL-safe manufacturer identifier used in filters, e.g. "quantum-energy". */
+  manufacturerSlug: string
   /** Price in EUR. */
   price: number
   description: string

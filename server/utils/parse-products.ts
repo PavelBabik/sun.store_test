@@ -1,5 +1,6 @@
 import { parse } from 'csv-parse/sync'
 import { CATEGORIES, getSpecUnit } from '#shared/utils/categories'
+import { slugify } from '#shared/utils/slugify'
 import type { CategorySlug } from '#shared/utils/categories'
 import type { Product } from '#shared/types/product'
 import { extractSpec } from './extract-spec'
@@ -15,15 +16,6 @@ interface CsvRow {
 const categoryByCsvValue = new Map<string, CategorySlug>(
   CATEGORIES.map(category => [category.csvValue, category.slug]),
 )
-
-export function slugify(value: string): string {
-  return value
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '') // drop diacritics split off by NFKD: "Ü" → "U"
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-}
 
 /**
  * Parses the raw CSV into normalized products.
@@ -70,7 +62,7 @@ export function parseProducts(csv: string): { products: Product[], skipped: stri
 
     const spec = extractSpec(name, description, getSpecUnit(category))
 
-    products.push({ id, name, manufacturer, price, description, category, spec })
+    products.push({ id, name, manufacturer, manufacturerSlug: slugify(manufacturer), price, description, category, spec })
   })
 
   return { products, skipped }

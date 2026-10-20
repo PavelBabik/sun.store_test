@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { parseProducts, slugify } from '../../server/utils/parse-products'
+import { parseProducts } from '../../server/utils/parse-products'
+import { slugify } from '../../shared/utils/slugify'
 
 const HEADER = 'name,manufacturer,price,description,category'
 
@@ -25,6 +26,7 @@ describe('parseProducts', () => {
       id: 'solarix-prime-450',
       name: 'Solarix Prime 450',
       manufacturer: 'Solarix',
+      manufacturerSlug: 'solarix',
       price: 279.99,
       description: 'A 450W panel, all black',
       category: 'solar-panel',
