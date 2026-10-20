@@ -64,13 +64,18 @@ watch(() => route.fullPath, () => {
 
 <template>
   <div class="lg:grid lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
+    <!--
+      Lazy hydration keeps the main thread free on phones: the sidebar is hidden below `lg`
+      (the drawer below has its own copy), so it only hydrates on wide screens.
+    -->
     <aside
       class="hidden lg:block"
       aria-label="Filters"
     >
-      <ProductFilters
+      <LazyProductFilters
         v-if="data"
         :facets="data.facets"
+        hydrate-on-media-query="(min-width: 1024px)"
       />
     </aside>
 
@@ -152,11 +157,16 @@ watch(() => route.fullPath, () => {
             v-for="product in data.items"
             :key="product.id"
           >
-            <ProductCard :product="product" />
+            <!-- Cards have no interactivity, so server HTML is enough; client-side renders mount normally. -->
+            <LazyProductCard
+              :product="product"
+              hydrate-never
+            />
           </li>
         </ul>
 
-        <ProductPagination
+        <LazyProductPagination
+          hydrate-on-visible
           :page="data.page"
           :page-count="data.pageCount"
           :page-size="data.pageSize"
