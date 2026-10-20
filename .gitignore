@@ -147,3 +147,14 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Nuxt dev/build outputs
+.data
+.nitro
+
+# Misc
+.DS_Store
+.fleet
+.idea
+.vercel
+
