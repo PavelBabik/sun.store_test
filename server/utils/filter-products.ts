@@ -1,5 +1,5 @@
 import { CATEGORIES, getSpecUnit } from '#shared/utils/categories'
-import { PAGE_SIZE } from '#shared/utils/product-query'
+import {CHEMISTRY_OPTIONS, PAGE_SIZE } from '#shared/utils/product-query'
 import type { ProductQuery } from '#shared/utils/product-query'
 import type { FacetOption, NumericRange, ProductsResponse } from '#shared/types/api'
 import type { Product } from '#shared/types/product'
@@ -49,6 +49,9 @@ function hasSpecFilter(query: ProductQuery): boolean {
 function matches(product: Product, query: ProductQuery, skip?: Filter): boolean {
   if (skip !== 'category' && query.category && product.category !== query.category) return false
   if (skip !== 'manufacturers' && query.manufacturers.length > 0 && !query.manufacturers.includes(product.manufacturerSlug)) return false
+  if (query.chemistries.length > 0 && !query.chemistries.some(value =>
+      CHEMISTRY_OPTIONS.find(o => o.value === value)!.terms.some(term => searchScore(product, [term]) > 0),
+  )) return false
   if (skip !== 'price' && !inRange(product.price, query.priceMin, query.priceMax)) return false
   if (skip !== 'spec' && hasSpecFilter(query)) {
     if (!product.spec || !inRange(product.spec.value, query.specMin, query.specMax)) return false

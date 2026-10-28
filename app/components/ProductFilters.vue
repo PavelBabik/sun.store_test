@@ -86,5 +86,13 @@ const specLabel = computed(() => CATEGORIES.find(c => c.slug === query.value.cat
         />
       </div>
     </fieldset>
+    <fieldset v-if="query.category === 'battery'">
+      <legend class="mb-2 text-sm font-medium">Chemistry</legend>
+      <UCheckboxGroup
+          :model-value="query.chemistries"
+          :items="CHEMISTRY_OPTIONS.map(o => ({ value: o.value, label: o.label }))"
+          @update:model-value="(chemistries) => update({ chemistries: chemistries as Chemistry[] })"
+      />
+    </fieldset>
   </div>
 </template>
